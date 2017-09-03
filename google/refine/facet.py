@@ -21,6 +21,11 @@ OpenRefine Facets, Engine, and Facet Responses.
 import json
 import re
 
+#py 2/3
+try:
+  basestring
+except NameError:
+  basestring = str
 
 def to_camel(attr):
     """convert this_attr_name to thisAttrName."""
