@@ -30,10 +30,13 @@ except ImportError:
     from io import StringIO
 
 import time
-import urllib
-import urllib2_file
-import urllib2
-import urlparse
+
+import requests
+    
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 from google.refine import facet
 from google.refine import history
@@ -78,30 +81,21 @@ class RefineServer(object):
                 data['project'] = project_id
             else:
                 params['project'] = project_id
-        if params:
-            url += '?' + urllib.urlencode(params)
-        req = urllib2.Request(url)
-        if data:
-            req.add_data(data)  # data = urllib.urlencode(data)
-        #req.add_header('Accept-Encoding', 'gzip')
+
+        #if data:
+        #    req.add_data(data)  # data = urllib.urlencode(data)
+
         try:
-            response = urllib2.urlopen(req)
-        except urllib2.HTTPError as e:
-            raise Exception('HTTP %d "%s" for %s\n\t%s' % (e.code, e.msg, e.geturl(), data))
-        except urllib2.URLError as e:
-            raise urllib2.URLError(
-                '%s for %s. No Refine server reachable/running; ENV set?' %
-                (e.reason, self.server))
-        if response.info().get('Content-Encoding', None) == 'gzip':
-            # Need a seekable filestream for gzip
-            gzip_fp = gzip.GzipFile(fileobj=StringIO.StringIO(response.read()))
-            # XXX Monkey patch response's filehandle. Better way?
-            urllib.addbase.__init__(response, gzip_fp)
+            response = requests.request('GET', url, params=params)
+        except requests.exceptions.HTTPError as e:
+            raise requests.exceptions.HTTPError(e)
+        except requests.exceptions.ConnectionError as e:
+            raise requests.exceptions.ConnectionError(e)
         return response
 
     def urlopen_json(self, *args, **kwargs):
         """Open a Refine URL, optionally POST data, and return parsed JSON."""
-        response = json.loads(self.urlopen(*args, **kwargs).read())
+        response = self.urlopen(*args, **kwargs).json()
         if 'code' in response and response['code'] not in ('ok', 'pending'):
             error_message = ('server ' + response['code'] + ': ' +
                              response.get('message', response.get('stack', response)))
