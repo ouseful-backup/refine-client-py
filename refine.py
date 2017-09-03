@@ -25,6 +25,7 @@ refine --apply trim.json 1234...
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import print_function
 
 import optparse
 import os
@@ -96,8 +97,7 @@ def main():
         if options.apply:
             response = project.apply_operations(options.apply)
             if response != 'ok':
-                print >>sys.stderr, 'Failed to apply %s: %s' % (options.apply,
-                                                                response)
+                print('Failed to apply %s: %s' % (options.apply, response),file=sys.stderr)
         if options.export:
             export_project(project, options)
 
